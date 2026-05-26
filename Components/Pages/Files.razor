@@ -1,0 +1,71 @@
+﻿@page "/files"
+@rendermode InteractiveServer
+
+@inject FileScannerService FileScannerService
+
+<PageTitle>Files</PageTitle>
+
+<MudText Typo="Typo.h4">Files</MudText>
+
+<MudButton Variant="Variant.Filled"
+           Color="Color.Primary"
+           OnClick="@ScanFiles"
+           Disabled="@isScanning">
+    Scan E:\JobSearch
+</MudButton>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <MudAlert Severity="Severity.Info" Class="mt-4">
+        @message
+    </MudAlert>
+}
+
+<MudTable Items="files" Dense="true" Hover="true" Class="mt-4">
+    <HeaderContent>
+        <MudTh>File</MudTh>
+        <MudTh>Category</MudTh>
+        <MudTh>Extension</MudTh>
+        <MudTh>Modified</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.RelativePath</MudTd>
+        <MudTd>@context.Category</MudTd>
+        <MudTd>@context.Extension</MudTd>
+        <MudTd>@context.LastModified.ToLocalTime().ToString("g")</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<JobSearchFile> files = new();
+    private string message = "";
+    private bool isScanning;
+
+    protected override async Task OnInitializedAsync()
+    {
+        files = await FileScannerService.GetAllAsync();
+    }
+
+    private async Task ScanFiles()
+    {
+        try
+        {
+            isScanning = true;
+            message = "Scanning files...";
+
+            var count = await FileScannerService.ScanAsync();
+
+            files = await FileScannerService.GetAllAsync();
+            await InvokeAsync(StateHasChanged);
+            message = $"Scan complete. {count} files scanned.";
+        }
+        catch (Exception ex)
+        {
+            message = $"Scan failed: {ex.Message}";
+        }
+        finally
+        {
+            isScanning = false;
+        }
+    }
+}
