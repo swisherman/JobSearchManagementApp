@@ -116,7 +116,15 @@ public class FileScannerService
 
             if (string.IsNullOrWhiteSpace(fileRecord.Id))
             {
-                fileRecord.Id = ObjectId.GenerateNewId().ToString();
+                if (existing != null && !string.IsNullOrWhiteSpace(existing.Id))
+                {
+                    fileRecord.Id = existing.Id;
+                }
+                else
+                {
+
+                    fileRecord.Id = ObjectId.GenerateNewId().ToString();
+                }
             }
             await _files.ReplaceOneAsync(
                 filter,
