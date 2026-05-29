@@ -1,31 +1,158 @@
 ﻿@page "/projects"
+@rendermode InteractiveServer
 
+@using JobSearchApp.Models
+@using JobSearchApp.Services
 @inject ProjectService ProjectService
 
 <PageTitle>Projects</PageTitle>
 
-<h3>Projects</h3>
+<MudText Typo="Typo.h4">Projects</MudText>
 
-@if (projects == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <ul>
-        @foreach (var project in projects)
-        {
-            <li>@project.Name</li>
-        }
-    </ul>
-}
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">
+        @(isEditing ? "Edit Project" : "Add Project")
+    </MudText>
+
+    <MudTextField Label="Name" @bind-Value="currentProject.Name" />
+    <MudTextField Label="Description" @bind-Value="currentProject.Description" Lines="3" />
+    <MudTextField Label="Technologies comma-separated" @bind-Value="technologyText" />
+    <MudTextField Label="Status" @bind-Value="currentProject.Status" />
+    <MudTextField Label="Repo Path" @bind-Value="currentProject.RepoPath" />
+    <MudTextField Label="GitHub URL" @bind-Value="currentProject.GitHubUrl" />
+    <MudTextField Label="Resume Bullet" @bind-Value="currentProject.ResumeBullet" Lines="3" />
+    <MudTextField Label="Notes" @bind-Value="currentProject.Notes" Lines="3" />
+
+    <MudCheckBox T="bool"
+                 Label="Portfolio Ready"
+                 @bind-Checked="currentProject.PortfolioReady" />
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               Class="mt-3"
+               OnClick="SaveProject">
+        @(isEditing ? "Save Changes" : "Add Project")
+    </MudButton>
+
+    @if (isEditing)
+    {
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Secondary"
+                   Class="mt-3 ml-2"
+                   OnClick="CancelEdit">
+            Cancel
+        </MudButton>
+    }
+</MudPaper>
+
+<MudTable Items="projects" Dense="true" Hover="true" Class="mt-4">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Technologies</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Portfolio Ready</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Name</MudTd>
+        <MudTd>@string.Join(", ", context.Technologies)</MudTd>
+        <MudTd>@context.Status</MudTd>
+        <MudTd>@(context.PortfolioReady ? "Yes" : "No")</MudTd>
+        <MudTd>
+            <MudButton Size="Size.Small"
+                       Color="Color.Primary"
+                       OnClick="@(() => StartEdit(context))">
+                Edit
+            </MudButton>
+
+            <MudButton Size="Size.Small"
+                       Color="Color.Error"
+                       Class="ml-2"
+                       OnClick="@(() => DeleteProject(context.Id))">
+                Delete
+            </MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
 
 @code {
-
-    private List<Project>? projects;
+    private List<Project> projects = new();
+    private Project currentProject = new();
+    private string technologyText = "";
+    private bool isEditing;
 
     protected override async Task OnInitializedAsync()
     {
-        projects = await ProjectService.GetAsync();
+        await LoadProjects();
+    }
+
+    private async Task LoadProjects()
+    {
+        projects = await ProjectService.GetAllAsync();
+    }
+
+    private async Task SaveProject()
+    {
+        if (string.IsNullOrWhiteSpace(currentProject.Name))
+            return;
+
+        currentProject.Technologies = technologyText
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        if (isEditing)
+        {
+            await ProjectService.UpdateAsync(currentProject);
+        }
+        else
+        {
+            await ProjectService.CreateAsync(currentProject);
+        }
+
+        ResetForm();
+        await LoadProjects();
+    }
+
+    private void StartEdit(Project project)
+    {
+        currentProject = new Project
+        {
+            Id = project.Id,
+            Name = project.Name,
+            Description = project.Description,
+            Technologies = project.Technologies.ToList(),
+            Status = project.Status,
+            RepoPath = project.RepoPath,
+            GitHubUrl = project.GitHubUrl,
+            PortfolioReady = project.PortfolioReady,
+            ResumeBullet = project.ResumeBullet,
+            Notes = project.Notes,
+            Created = project.Created,
+            LastModified = project.LastModified
+        };
+
+        technologyText = string.Join(", ", currentProject.Technologies);
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        currentProject = new Project();
+        technologyText = "";
+        isEditing = false;
+    }
+
+    private async Task DeleteProject(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return;
+
+        await ProjectService.DeleteAsync(id);
+        await LoadProjects();
     }
 }
