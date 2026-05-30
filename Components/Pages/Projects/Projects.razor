@@ -25,15 +25,20 @@
 
     <MudCheckBox T="bool"
                  Label="Portfolio Ready"
-                 @bind-Checked="currentProject.PortfolioReady" />
+                 @bind-Value="currentProject.PortfolioReady" />
 
     <MudButton Variant="Variant.Filled"
                Color="Color.Primary"
                Class="mt-3"
-               OnClick="SaveProject">
+               OnClick="@SaveProject">
         @(isEditing ? "Save Changes" : "Add Project")
     </MudButton>
-
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <MudAlert Severity="Severity.Info" Class="mt-3">
+            @message
+        </MudAlert>
+    }
     @if (isEditing)
     {
         <MudButton Variant="Variant.Text"
@@ -80,7 +85,7 @@
     private Project currentProject = new();
     private string technologyText = "";
     private bool isEditing;
-
+    private string message = "";
     protected override async Task OnInitializedAsync()
     {
         await LoadProjects();
@@ -93,26 +98,39 @@
 
     private async Task SaveProject()
     {
-        if (string.IsNullOrWhiteSpace(currentProject.Name))
-            return;
-
-        currentProject.Technologies = technologyText
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToList();
-
-        if (isEditing)
+        try
         {
-            await ProjectService.UpdateAsync(currentProject);
-        }
-        else
-        {
-            await ProjectService.CreateAsync(currentProject);
-        }
+            message = "";
 
-        ResetForm();
-        await LoadProjects();
+            if (string.IsNullOrWhiteSpace(currentProject.Name))
+            {
+                message = "Project name is required.";
+                return;
+            }
+
+            currentProject.Technologies = technologyText
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+
+            if (isEditing)
+            {
+                await ProjectService.UpdateAsync(currentProject);
+                message = "Project updated.";
+            }
+            else
+            {
+                await ProjectService.CreateAsync(currentProject);
+                message = "Project added.";
+            }
+
+            ResetForm();
+            await LoadProjects();
+        }
+        catch (Exception ex)
+        {
+            message = $"Save failed: {ex.Message}";
+        }
     }
-
     private void StartEdit(Project project)
     {
         currentProject = new Project
