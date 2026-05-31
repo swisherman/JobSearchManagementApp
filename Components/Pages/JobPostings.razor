@@ -1,0 +1,97 @@
+﻿@page "/jobpostings"
+@rendermode InteractiveServer
+
+@using JobSearchApp.Models
+@using JobSearchApp.Services
+@inject JobPostingService JobPostingService
+@inject CompanyService CompanyService
+
+<PageTitle>Job Postings</PageTitle>
+
+<MudText Typo="Typo.h4">Job Postings</MudText>
+
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">Add Job Posting</MudText>
+
+    <MudTextField Label="Title" @bind-Value="currentJob.Title" />
+
+    <MudSelect T="string" Label="Company" Value="currentJob.CompanyId" ValueChanged="OnCompanyChanged">
+        @foreach (var company in companies)
+        {
+            <MudSelectItem Value="@company.Id">@company.Name</MudSelectItem>
+        }
+    </MudSelect>
+
+    <MudTextField Label="Posting URL" @bind-Value="currentJob.PostingUrl" />
+    <MudTextField Label="Location" @bind-Value="currentJob.Location" />
+    <MudTextField Label="Work Mode" @bind-Value="currentJob.WorkMode" />
+    <MudTextField Label="Salary Range" @bind-Value="currentJob.SalaryRange" />
+    <MudTextField Label="Technologies comma-separated" @bind-Value="technologyText" />
+    <MudTextField Label="Description" @bind-Value="currentJob.Description" Lines="4" />
+    <MudTextField Label="Notes" @bind-Value="currentJob.Notes" Lines="3" />
+    <MudTextField Label="Status" @bind-Value="currentJob.Status" />
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" OnClick="SaveJob">
+        Save
+    </MudButton>
+</MudPaper>
+
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">Job Posting List</MudText>
+
+    <MudTable Items="jobPostings">
+        <HeaderContent>
+            <MudTh>Title</MudTh>
+            <MudTh>Company</MudTh>
+            <MudTh>Location</MudTh>
+            <MudTh>Status</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.Title</MudTd>
+            <MudTd>@context.CompanyName</MudTd>
+            <MudTd>@context.Location</MudTd>
+            <MudTd>@context.Status</MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<JobPosting> jobPostings = new();
+    private List<Company> companies = new();
+    private JobPosting currentJob = new();
+    private string technologyText = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        companies = await CompanyService.GetAsync();
+        await LoadJobs();
+    }
+
+    private async Task LoadJobs()
+    {
+        jobPostings = await JobPostingService.GetAsync();
+    }
+
+    private void OnCompanyChanged(string companyId)
+    {
+        currentJob.CompanyId = companyId;
+
+        var company = companies.FirstOrDefault(c => c.Id == companyId);
+        currentJob.CompanyName = company?.Name ?? "";
+    }
+
+    private async Task SaveJob()
+    {
+        currentJob.Technologies = technologyText
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        await JobPostingService.CreateAsync(currentJob);
+
+        currentJob = new JobPosting();
+        technologyText = "";
+
+        await LoadJobs();
+    }
+}

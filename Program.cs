@@ -21,6 +21,13 @@ builder.Services.Configure<JobSearchSettings>(
 
 builder.Services.AddSingleton<FileScannerService>();
 
+
+builder.Services.AddSingleton<CompanyService>();
+builder.Services.AddSingleton<JobPostingService>();
+builder.Services.AddSingleton<ApplicationRecordService>();
+
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

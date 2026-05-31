@@ -1,13 +1,148 @@
 ﻿@page "/companies"
+@rendermode InteractiveServer
+
+@using JobSearchApp.Models
+@using JobSearchApp.Services
+@inject CompanyService CompanyService
 
 <PageTitle>Companies</PageTitle>
 
 <MudText Typo="Typo.h4">Companies</MudText>
 
-<MudText>
-    Companies you have researched or applied to will appear here.
-</MudText>
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">
+        @(isEditing ? "Edit Company" : "Add Company")
+    </MudText>
+
+    <MudTextField Label="Name" @bind-Value="currentCompany.Name" />
+    <MudTextField Label="Website URL" @bind-Value="currentCompany.WebsiteUrl" />
+    <MudTextField Label="Careers URL" @bind-Value="currentCompany.CareersUrl" />
+    <MudTextField Label="LinkedIn URL" @bind-Value="currentCompany.LinkedInUrl" />
+    <MudTextField Label="Industry" @bind-Value="currentCompany.Industry" />
+    <MudTextField Label="Location" @bind-Value="currentCompany.Location" />
+    <MudTextField Label="Notes" @bind-Value="currentCompany.Notes" Lines="3" />
+
+    <MudCheckBox T="bool"
+                 Label="Target Company"
+                 @bind-Value="currentCompany.TargetCompany" />
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               Class="mt-3"
+               OnClick="SaveCompany">
+        Save
+    </MudButton>
+
+    @if (isEditing)
+    {
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Secondary"
+                   Class="mt-3 ml-2"
+                   OnClick="CancelEdit">
+            Cancel
+        </MudButton>
+    }
+</MudPaper>
+
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">Company List</MudText>
+
+    <MudTable Items="companies">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Industry</MudTh>
+            <MudTh>Location</MudTh>
+            <MudTh>Target</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.Industry</MudTd>
+            <MudTd>@context.Location</MudTd>
+            <MudTd>@(context.TargetCompany ? "Yes" : "No")</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small"
+                           Color="Color.Primary"
+                           OnClick="@(() => EditCompany(context))">
+                    Edit
+                </MudButton>
+
+                <MudButton Size="Size.Small"
+                           Color="Color.Error"
+                           Class="ml-2"
+                           OnClick="@(() => DeleteCompany(context.Id))">
+                    Delete
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
 
 @code {
+    private List<Company> companies = new();
+    private Company currentCompany = new();
+    private bool isEditing = false;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCompanies();
+    }
+
+    private async Task LoadCompanies()
+    {
+        companies = await CompanyService.GetAsync();
+    }
+
+    private async Task SaveCompany()
+    {
+        if (isEditing && !string.IsNullOrWhiteSpace(currentCompany.Id))
+        {
+            await CompanyService.UpdateAsync(currentCompany.Id, currentCompany);
+        }
+        else
+        {
+            await CompanyService.CreateAsync(currentCompany);
+        }
+
+        currentCompany = new Company();
+        isEditing = false;
+
+        await LoadCompanies();
+    }
+
+    private void EditCompany(Company company)
+    {
+        currentCompany = new Company
+        {
+            Id = company.Id,
+            Name = company.Name,
+            WebsiteUrl = company.WebsiteUrl,
+            CareersUrl = company.CareersUrl,
+            LinkedInUrl = company.LinkedInUrl,
+            Industry = company.Industry,
+            Location = company.Location,
+            Notes = company.Notes,
+            TargetCompany = company.TargetCompany,
+            Created = company.Created,
+            LastModified = company.LastModified
+        };
+
+        isEditing = true;
+    }
+
+    private async Task DeleteCompany(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return;
+
+        await CompanyService.DeleteAsync(id);
+        await LoadCompanies();
+    }
+
+    private void CancelEdit()
+    {
+        currentCompany = new Company();
+        isEditing = false;
+    }
 }
