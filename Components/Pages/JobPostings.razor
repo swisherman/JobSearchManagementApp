@@ -1,6 +1,6 @@
 ﻿@page "/jobpostings"
 @rendermode InteractiveServer
-
+@using MudBlazor
 @using JobSearchApp.Models
 @using JobSearchApp.Services
 @inject JobPostingService JobPostingService
@@ -45,13 +45,21 @@
             <MudTh>Company</MudTh>
             <MudTh>Location</MudTh>
             <MudTh>Status</MudTh>
+            <MudTh>Edit</MudTh>
         </HeaderContent>
-
         <RowTemplate>
             <MudTd>@context.Title</MudTd>
             <MudTd>@context.CompanyName</MudTd>
             <MudTd>@context.Location</MudTd>
             <MudTd>@context.Status</MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Small"
+                           Href="@($"/jobpostings/edit/{context.Id}")">
+                    Edit
+                </MudButton>
+            </MudTd>
         </RowTemplate>
     </MudTable>
 </MudPaper>

@@ -1,26 +1,21 @@
 ﻿@inherits LayoutComponentBase
 
+
 <MudThemeProvider />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Color="Color.Primary">
-        <MudText Typo="Typo.h6">JobSearchApp</MudText>
-    </MudAppBar>
-
-    <MudDrawer Open="true" Variant="DrawerVariant.Responsive">
+    <MudDrawer Open="true"
+               Variant="DrawerVariant.Persistent"
+               Elevation="1">
         <NavMenu />
     </MudDrawer>
 
-    <MudMainContent Class="pa-4">
-        @Body
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="pa-4">
+            @Body
+        </MudContainer>
     </MudMainContent>
 </MudLayout>
-
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
