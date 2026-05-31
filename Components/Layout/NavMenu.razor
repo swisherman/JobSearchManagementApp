@@ -4,51 +4,52 @@
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Dashboard
-            </NavLink>
-        </div>
+<nav>
+    <MudNavMenu>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="projects">
-                <span class="bi bi-folder-fill-nav-menu" aria-hidden="true"></span> Projects
-            </NavLink>
-        </div>
+        <MudNavLink Href="/" Match="NavLinkMatch.All"
+                    Icon="@Icons.Material.Filled.Home">
+            Dashboard
+        </MudNavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="companies">
-                <span class="bi bi-building-fill-nav-menu" aria-hidden="true"></span> Companies
-            </NavLink>
-        </div>
+        <MudNavLink Href="/projects"
+                    Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Description">
+            Projects
+        </MudNavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="jobs">
-                <span class="bi bi-briefcase-fill-nav-menu" aria-hidden="true"></span> Jobs
-            </NavLink>
-        </div>
+        <MudNavLink Href="/jobs"
+                    Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Work">
+            Jobs
+        </MudNavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="applications">
-                <span class="bi bi-card-checklist-nav-menu" aria-hidden="true"></span> Applications
-            </NavLink>
-        </div>
+        <MudNavLink Href="/files"
+                    Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Folder">
+            Files
+        </MudNavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="files">
-                <span class="bi bi-file-earmark-fill-nav-menu" aria-hidden="true"></span> Files
-            </NavLink>
-        </div>
-        <MudNavLink Href="/companies" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Business">
+        <MudNavLink Href="/applications"
+                    Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Assignment">
+            Applications
+        </MudNavLink>
+
+        <MudNavLink Href="/companies"
+                    Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Business">
             Companies
         </MudNavLink>
-        <MudNavLink Href="/jobpostings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Work">
+
+        <MudNavLink Href="/jobpostings"
+                    Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.WorkHistory">
             Job Postings
         </MudNavLink>
-    </nav>
-</div>
+
+    </MudNavMenu>
+</nav>
+
 
