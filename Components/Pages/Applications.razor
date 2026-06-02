@@ -1,13 +1,181 @@
 ﻿@page "/applications"
+@rendermode InteractiveServer
+
+@using JobSearchApp.Models
+@using JobSearchApp.Services
+@inject ApplicationRecordService ApplicationService
+@inject JobPostingService JobPostingService
+@inject NavigationManager Navigation
 
 <PageTitle>Applications</PageTitle>
 
 <MudText Typo="Typo.h4">Applications</MudText>
 
-<MudText>
-    Submitted applications and follow-ups will appear here.
-</MudText>
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">
+        @(isEditing ? "Edit Application" : "Add Application")
+    </MudText>
+
+    <MudSelect T="string" Label="Job Posting" Value="currentApplication.JobPostingId" ValueChanged="OnJobPostingChanged">
+        @foreach (var job in jobPostings)
+        {
+            <MudSelectItem Value="@(job.Id ?? "")">
+                @job.Title - @job.CompanyName
+            </MudSelectItem>
+        }
+    </MudSelect>
+
+    <MudDatePicker Label="Date Applied" @bind-Date="dateApplied" />
+
+    <MudSelect T="string" Label="Status" @bind-Value="currentApplication.Status">
+        <MudSelectItem Value="@("Applied")">Applied</MudSelectItem>
+        <MudSelectItem Value="@("Followed Up")">Followed Up</MudSelectItem>
+        <MudSelectItem Value="@("Interviewing")">Interviewing</MudSelectItem>
+        <MudSelectItem Value="@("Offer")">Offer</MudSelectItem>
+        <MudSelectItem Value="@("Rejected")">Rejected</MudSelectItem>
+        <MudSelectItem Value="@("Withdrawn")">Withdrawn</MudSelectItem>
+    </MudSelect>
+
+    <MudTextField Label="Resume Version" @bind-Value="currentApplication.ResumeVersion" />
+    <MudTextField Label="Cover Letter Version" @bind-Value="currentApplication.CoverLetterVersion" />
+
+    <MudDatePicker Label="Follow Up Date" @bind-Date="followUpDate" />
+
+    <MudTextField Label="Contact Name" @bind-Value="currentApplication.ContactName" />
+    <MudTextField Label="Contact Email" @bind-Value="currentApplication.ContactEmail" />
+
+    <MudTextField Label="Notes" @bind-Value="currentApplication.Notes" Lines="4" />
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               Class="mt-3"
+               OnClick="SaveApplication">
+        Save
+    </MudButton>
+
+    @if (isEditing)
+    {
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Secondary"
+                   Class="mt-3 ml-2"
+                   OnClick="CancelEdit">
+            Cancel
+        </MudButton>
+    }
+</MudPaper>
+
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">Application List</MudText>
+
+    <MudTable Items="applications">
+        <HeaderContent>
+            <MudTh>Date Applied</MudTh>
+            <MudTh>Job Title</MudTh>
+            <MudTh>Company</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Follow Up</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.DateApplied.ToShortDateString()</MudTd>
+            <MudTd>@context.JobTitle</MudTd>
+            <MudTd>@context.CompanyName</MudTd>
+            <MudTd>@context.Status</MudTd>
+            <MudTd>@(context.FollowUpDate?.ToShortDateString() ?? "")</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small"
+                           Color="Color.Primary"
+                           OnClick="@(() => EditApplication(context))">
+                    Edit
+                </MudButton>
+
+                <MudButton Size="Size.Small"
+                           Color="Color.Error"
+                           Class="ml-2"
+                           OnClick="@(() => DeleteApplication(context.Id))">
+                    Delete
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
 
 @code {
+    private List<ApplicationRecord> applications = new();
+    private List<JobPosting> jobPostings = new();
 
+    private ApplicationRecord currentApplication = new();
+    private bool isEditing = false;
+
+    private DateTime? dateApplied = DateTime.Today;
+    private DateTime? followUpDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        jobPostings = await JobPostingService.GetAsync();
+        await LoadApplications();
+    }
+
+    private async Task LoadApplications()
+    {
+        applications = await ApplicationService.GetAsync();
+    }
+
+    private void OnJobPostingChanged(string jobPostingId)
+    {
+        currentApplication.JobPostingId = jobPostingId;
+
+        var job = jobPostings.FirstOrDefault(j => j.Id == jobPostingId);
+
+        currentApplication.JobTitle = job?.Title ?? "";
+        currentApplication.CompanyId = job?.CompanyId ?? "";
+        currentApplication.CompanyName = job?.CompanyName ?? "";
+    }
+
+    private async Task SaveApplication()
+    {
+        currentApplication.DateApplied = dateApplied ?? DateTime.Today;
+        currentApplication.FollowUpDate = followUpDate;
+
+        if (isEditing && !string.IsNullOrWhiteSpace(currentApplication.Id))
+        {
+            await ApplicationService.UpdateAsync(currentApplication.Id, currentApplication);
+        }
+        else
+        {
+            await ApplicationService.CreateAsync(currentApplication);
+        }
+
+        currentApplication = new ApplicationRecord();
+        dateApplied = DateTime.Today;
+        followUpDate = null;
+        isEditing = false;
+
+        await LoadApplications();
+    }
+
+    private void EditApplication(ApplicationRecord application)
+    {
+        if (string.IsNullOrWhiteSpace(application.Id))
+            return;
+
+        Navigation.NavigateTo($"/applications/edit/{application.Id}");
+    }
+    private async Task DeleteApplication(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return;
+
+        await ApplicationService.DeleteAsync(id);
+        await LoadApplications();
+    }
+
+    private void CancelEdit()
+    {
+        currentApplication = new ApplicationRecord();
+        dateApplied = DateTime.Today;
+        followUpDate = null;
+        isEditing = false;
+    }
 }

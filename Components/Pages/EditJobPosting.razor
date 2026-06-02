@@ -1,8 +1,13 @@
 ﻿@page "/jobpostings/edit/{Id}"
 @rendermode InteractiveServer
 
+@using JobSearchApp.Models
+@using JobSearchApp.Services
 @inject JobPostingService JobPostingService
+@inject CompanyService CompanyService
 @inject NavigationManager Navigation
+
+<PageTitle>Edit Job Posting</PageTitle>
 
 <MudText Typo="Typo.h4">Edit Job Posting</MudText>
 
@@ -12,18 +17,62 @@
 }
 else
 {
-    <MudForm>
+    <MudPaper Class="pa-4 mt-4">
         <MudTextField Label="Title" @bind-Value="jobPosting.Title" />
-        <MudTextField Label="Company Name" @bind-Value="jobPosting.CompanyName" />
+
+        <MudSelect T="string" Label="Company" Value="jobPosting.CompanyId" ValueChanged="OnCompanyChanged">
+            @foreach (var company in companies)
+            {
+                <MudSelectItem Value="@(company.Id ?? "")">@company.Name</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudTextField Label="Posting URL" @bind-Value="jobPosting.PostingUrl" />
         <MudTextField Label="Location" @bind-Value="jobPosting.Location" />
-        <MudTextField Label="Status" @bind-Value="jobPosting.Status" />
+
+        <MudSelect T="string" Label="Work Mode" @bind-Value="jobPosting.WorkMode">
+            <MudSelectItem Value="@("Remote")">Remote</MudSelectItem>
+            <MudSelectItem Value="@("Hybrid")">Hybrid</MudSelectItem>
+            <MudSelectItem Value="@("On-site")">On-site</MudSelectItem>
+        </MudSelect>
+
+        <MudTextField Label="Salary Range" @bind-Value="jobPosting.SalaryRange" />
+
+        <MudTextField Label="Technologies comma-separated"
+                      @bind-Value="technologyText" />
+
+        <MudDatePicker Label="Date Posted" @bind-Date="datePosted" />
+
+        <MudTextField Label="Description"
+                      @bind-Value="jobPosting.Description"
+                      Lines="5" />
+
+        <MudTextField Label="Notes"
+                      @bind-Value="jobPosting.Notes"
+                      Lines="4" />
+
+        <MudSelect T="string" Label="Status" @bind-Value="jobPosting.Status">
+            <MudSelectItem Value="@("Interested")">Interested</MudSelectItem>
+            <MudSelectItem Value="@("Applied")">Applied</MudSelectItem>
+            <MudSelectItem Value="@("Interviewing")">Interviewing</MudSelectItem>
+            <MudSelectItem Value="@("Rejected")">Rejected</MudSelectItem>
+            <MudSelectItem Value="@("Closed")">Closed</MudSelectItem>
+        </MudSelect>
 
         <MudButton Color="Color.Primary"
                    Variant="Variant.Filled"
+                   Class="mt-3"
                    OnClick="Save">
             Save
         </MudButton>
-    </MudForm>
+
+        <MudButton Color="Color.Secondary"
+                   Variant="Variant.Outlined"
+                   Class="mt-3 ml-2"
+                   OnClick="Cancel">
+            Cancel
+        </MudButton>
+    </MudPaper>
 }
 
 @code {
@@ -31,10 +80,32 @@ else
     public string Id { get; set; } = string.Empty;
 
     private JobPosting? jobPosting;
+    private List<Company> companies = new();
+
+    private string technologyText = "";
+    private DateTime? datePosted;
 
     protected override async Task OnInitializedAsync()
     {
+        companies = await CompanyService.GetAsync();
         jobPosting = await JobPostingService.GetAsync(Id);
+
+        if (jobPosting is not null)
+        {
+            technologyText = string.Join(", ", jobPosting.Technologies);
+            datePosted = jobPosting.DatePosted;
+        }
+    }
+
+    private void OnCompanyChanged(string companyId)
+    {
+        if (jobPosting is null)
+            return;
+
+        jobPosting.CompanyId = companyId;
+
+        var company = companies.FirstOrDefault(c => c.Id == companyId);
+        jobPosting.CompanyName = company?.Name ?? "";
     }
 
     private async Task Save()
@@ -42,7 +113,19 @@ else
         if (jobPosting is null)
             return;
 
-        await JobPostingService.UpdateAsync(jobPosting.Id ?? string.Empty,  jobPosting);
+        jobPosting.Technologies = technologyText
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        jobPosting.DatePosted = datePosted;
+
+        await JobPostingService.UpdateAsync(jobPosting.Id ?? string.Empty, jobPosting);
+
+        Navigation.NavigateTo("/jobpostings");
+    }
+
+    private void Cancel()
+    {
         Navigation.NavigateTo("/jobpostings");
     }
 }

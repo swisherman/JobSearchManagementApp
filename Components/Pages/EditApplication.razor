@@ -1,0 +1,122 @@
+﻿@page "/applications/edit/{Id}"
+@rendermode InteractiveServer
+
+@using JobSearchApp.Models
+@using JobSearchApp.Services
+@inject ApplicationRecordService ApplicationService
+@inject JobPostingService JobPostingService
+@inject NavigationManager Navigation
+
+<PageTitle>Edit Application</PageTitle>
+
+<MudText Typo="Typo.h4">Edit Application</MudText>
+
+@if (application == null)
+{
+    <MudText>Loading...</MudText>
+}
+else
+{
+    <MudPaper Class="pa-4 mt-4">
+
+        <MudSelect T="string" Label="Job Posting" Value="application.JobPostingId" ValueChanged="OnJobPostingChanged">
+            @foreach (var job in jobPostings)
+            {
+                <MudSelectItem Value="@(job.Id ?? "")">
+                    @job.Title - @job.CompanyName
+                </MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudDatePicker Label="Date Applied" @bind-Date="dateApplied" />
+
+        <MudSelect T="string" Label="Status" @bind-Value="application.Status">
+            <MudSelectItem Value="@("Applied")">Applied</MudSelectItem>
+            <MudSelectItem Value="@("Followed Up")">Followed Up</MudSelectItem>
+            <MudSelectItem Value="@("Interviewing")">Interviewing</MudSelectItem>
+            <MudSelectItem Value="@("Offer")">Offer</MudSelectItem>
+            <MudSelectItem Value="@("Rejected")">Rejected</MudSelectItem>
+            <MudSelectItem Value="@("Withdrawn")">Withdrawn</MudSelectItem>
+        </MudSelect>
+
+        <MudTextField Label="Resume Version" @bind-Value="application.ResumeVersion" />
+        <MudTextField Label="Cover Letter Version" @bind-Value="application.CoverLetterVersion" />
+
+        <MudDatePicker Label="Follow Up Date" @bind-Date="followUpDate" />
+
+        <MudTextField Label="Contact Name" @bind-Value="application.ContactName" />
+        <MudTextField Label="Contact Email" @bind-Value="application.ContactEmail" />
+
+        <MudTextField Label="Notes" @bind-Value="application.Notes" Lines="5" />
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Class="mt-3"
+                   OnClick="Save">
+            Save
+        </MudButton>
+
+        <MudButton Color="Color.Secondary"
+                   Variant="Variant.Outlined"
+                   Class="mt-3 ml-2"
+                   OnClick="Cancel">
+            Cancel
+        </MudButton>
+
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    private ApplicationRecord? application;
+    private List<JobPosting> jobPostings = new();
+
+    private DateTime? dateApplied;
+    private DateTime? followUpDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        jobPostings = await JobPostingService.GetAsync();
+        application = await ApplicationService.GetAsync(Id);
+
+        if (application is not null)
+        {
+            dateApplied = application.DateApplied;
+            followUpDate = application.FollowUpDate;
+        }
+    }
+
+    private void OnJobPostingChanged(string jobPostingId)
+    {
+        if (application is null)
+            return;
+
+        application.JobPostingId = jobPostingId;
+
+        var job = jobPostings.FirstOrDefault(j => j.Id == jobPostingId);
+
+        application.JobTitle = job?.Title ?? "";
+        application.CompanyId = job?.CompanyId ?? "";
+        application.CompanyName = job?.CompanyName ?? "";
+    }
+
+    private async Task Save()
+    {
+        if (application is null || string.IsNullOrWhiteSpace(application.Id))
+            return;
+
+        application.DateApplied = dateApplied ?? DateTime.Today;
+        application.FollowUpDate = followUpDate;
+
+        await ApplicationService.UpdateAsync(application.Id, application);
+
+        Navigation.NavigateTo("/applications");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/applications");
+    }
+}
