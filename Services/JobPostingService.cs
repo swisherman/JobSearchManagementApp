@@ -40,7 +40,7 @@ public class JobPostingService
         jobPosting.LastModified = DateTime.UtcNow;
         await _jobPostings.ReplaceOneAsync(j => j.Id == id, jobPosting);
     }
-
+    
     public async Task DeleteAsync(string id) =>
         await _jobPostings.DeleteOneAsync(j => j.Id == id);
 }

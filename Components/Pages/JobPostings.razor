@@ -59,6 +59,12 @@
                            Href="@($"/jobpostings/edit/{context.Id}")">
                     Edit
                 </MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Error"
+                           Size="Size.Small"
+                           OnClick="@(() => DeleteJob(context.Id))">
+                    Delete
+                </MudButton>
             </MudTd>
         </RowTemplate>
     </MudTable>
@@ -101,5 +107,11 @@
         technologyText = "";
 
         await LoadJobs();
+    }
+    private async Task DeleteJob(string id)
+    {
+        await JobPostingService.DeleteAsync(id);
+
+        jobPostings = await JobPostingService.GetAsync();
     }
 }
