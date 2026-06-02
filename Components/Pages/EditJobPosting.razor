@@ -1,0 +1,48 @@
+﻿@page "/jobpostings/edit/{Id}"
+@rendermode InteractiveServer
+
+@inject JobPostingService JobPostingService
+@inject NavigationManager Navigation
+
+<MudText Typo="Typo.h4">Edit Job Posting</MudText>
+
+@if (jobPosting == null)
+{
+    <MudText>Loading...</MudText>
+}
+else
+{
+    <MudForm>
+        <MudTextField Label="Title" @bind-Value="jobPosting.Title" />
+        <MudTextField Label="Company Name" @bind-Value="jobPosting.CompanyName" />
+        <MudTextField Label="Location" @bind-Value="jobPosting.Location" />
+        <MudTextField Label="Status" @bind-Value="jobPosting.Status" />
+
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Save">
+            Save
+        </MudButton>
+    </MudForm>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    private JobPosting? jobPosting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        jobPosting = await JobPostingService.GetAsync(Id);
+    }
+
+    private async Task Save()
+    {
+        if (jobPosting is null)
+            return;
+
+        await JobPostingService.UpdateAsync(jobPosting.Id ?? string.Empty,  jobPosting);
+        Navigation.NavigateTo("/jobpostings");
+    }
+}
