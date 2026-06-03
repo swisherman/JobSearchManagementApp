@@ -1,0 +1,90 @@
+﻿@page "/interviews"
+@rendermode InteractiveServer
+
+@using JobSearchApp.Models
+@using JobSearchApp.Services
+
+@inject ApplicationRecordService ApplicationService
+@inject NavigationManager Navigation
+
+<PageTitle>Interviews</PageTitle>
+
+<MudText Typo="Typo.h4">Interviews</MudText>
+
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">All Interviews</MudText>
+
+    <MudTable Items="interviews">
+        <HeaderContent>
+            <MudTh>Date</MudTh>
+            <MudTh>Company</MudTh>
+            <MudTh>Job Title</MudTh>
+            <MudTh>Type</MudTh>
+            <MudTh>Interviewer</MudTh>
+            <MudTh>Outcome</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.InterviewDate.ToShortDateString()</MudTd>
+            <MudTd>@context.CompanyName</MudTd>
+            <MudTd>@context.JobTitle</MudTd>
+            <MudTd>@context.InterviewType</MudTd>
+            <MudTd>@context.InterviewerName</MudTd>
+            <MudTd>@context.Outcome</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small"
+                           Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           OnClick="@(() => EditApplication(context.ApplicationId))">
+                    Edit Application
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<InterviewListItem> interviews = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var applications = await ApplicationService.GetAsync();
+
+        interviews = applications
+            .Where(a => a.Interviews != null && a.Interviews.Any())
+            .SelectMany(a => a.Interviews.Select(i => new InterviewListItem
+            {
+                ApplicationId = a.Id ?? "",
+                CompanyName = a.CompanyName,
+                JobTitle = a.JobTitle,
+                InterviewDate = i.InterviewDate,
+                InterviewType = i.InterviewType,
+                InterviewerName = i.InterviewerName,
+                Outcome = i.Outcome,
+                Notes = i.Notes
+            }))
+            .OrderBy(i => i.InterviewDate)
+            .ToList();
+    }
+
+    private void EditApplication(string applicationId)
+    {
+        if (string.IsNullOrWhiteSpace(applicationId))
+            return;
+
+        Navigation.NavigateTo($"/applications/edit/{applicationId}");
+    }
+
+    private class InterviewListItem
+    {
+        public string ApplicationId { get; set; } = "";
+        public string CompanyName { get; set; } = "";
+        public string JobTitle { get; set; } = "";
+        public DateTime InterviewDate { get; set; }
+        public string InterviewType { get; set; } = "";
+        public string InterviewerName { get; set; } = "";
+        public string Outcome { get; set; } = "";
+        public string Notes { get; set; } = "";
+    }
+}

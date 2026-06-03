@@ -34,15 +34,3 @@ public class ApplicationRecord
     public DateTime Created { get; set; } = DateTime.UtcNow;
     public DateTime LastModified { get; set; } = DateTime.UtcNow;
 }
-public class InterviewRecord
-{
-    public DateTime InterviewDate { get; set; }
-
-    public string InterviewType { get; set; } = "";
-
-    public string InterviewerName { get; set; } = "";
-
-    public string Notes { get; set; } = "";
-
-    public string Outcome { get; set; } = "";
-}

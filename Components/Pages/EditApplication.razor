@@ -48,7 +48,65 @@ else
         <MudTextField Label="Contact Email" @bind-Value="application.ContactEmail" />
 
         <MudTextField Label="Notes" @bind-Value="application.Notes" Lines="5" />
+        <MudDivider Class="my-4" />
 
+        <MudText Typo="Typo.h6">Interviews</MudText>
+
+        <MudDatePicker Label="Interview Date" @bind-Date="newInterviewDate" />
+
+        <MudSelect T="string" Label="Interview Type" @bind-Value="newInterview.InterviewType">
+            <MudSelectItem Value="@("Phone Screen")">Phone Screen</MudSelectItem>
+            <MudSelectItem Value="@("Recruiter Call")">Recruiter Call</MudSelectItem>
+            <MudSelectItem Value="@("Technical Interview")">Technical Interview</MudSelectItem>
+            <MudSelectItem Value="@("Hiring Manager")">Hiring Manager</MudSelectItem>
+            <MudSelectItem Value="@("Panel Interview")">Panel Interview</MudSelectItem>
+            <MudSelectItem Value="@("Final Interview")">Final Interview</MudSelectItem>
+        </MudSelect>
+
+        <MudTextField Label="Interviewer Name" @bind-Value="newInterview.InterviewerName" />
+
+        <MudSelect T="string" Label="Outcome" @bind-Value="newInterview.Outcome">
+            <MudSelectItem Value="@("Pending")">Pending</MudSelectItem>
+            <MudSelectItem Value="@("Passed")">Passed</MudSelectItem>
+            <MudSelectItem Value="@("Rejected")">Rejected</MudSelectItem>
+            <MudSelectItem Value="@("Cancelled")">Cancelled</MudSelectItem>
+        </MudSelect>
+
+        <MudTextField Label="Interview Notes" @bind-Value="newInterview.Notes" Lines="3" />
+
+        <MudButton Color="Color.Secondary"
+                   Variant="Variant.Filled"
+                   Class="mt-3"
+                   OnClick="AddInterview">
+            Add Interview
+        </MudButton>
+
+        <MudTable Items="application.Interviews" Class="mt-4">
+            <HeaderContent>
+                <MudTh>Date</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Interviewer</MudTh>
+                <MudTh>Outcome</MudTh>
+                <MudTh>Notes</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd>@context.InterviewDate.ToShortDateString()</MudTd>
+                <MudTd>@context.InterviewType</MudTd>
+                <MudTd>@context.InterviewerName</MudTd>
+                <MudTd>@context.Outcome</MudTd>
+                <MudTd>@context.Notes</MudTd>
+                <MudTd>
+                    <MudButton Size="Size.Small"
+                               Color="Color.Error"
+                               Variant="Variant.Outlined"
+                               OnClick="@(() => RemoveInterview(context))">
+                        Remove
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
         <MudButton Color="Color.Primary"
                    Variant="Variant.Filled"
                    Class="mt-3"
@@ -69,6 +127,8 @@ else
 @code {
     [Parameter]
     public string Id { get; set; } = string.Empty;
+    private InterviewRecord newInterview = new();
+    private DateTime? newInterviewDate = DateTime.Today;
 
     private ApplicationRecord? application;
     private List<JobPosting> jobPostings = new();
@@ -118,5 +178,32 @@ else
     private void Cancel()
     {
         Navigation.NavigateTo("/applications");
+    }
+    private void AddInterview()
+    {
+        if (application is null)
+            return;
+
+        newInterview.InterviewDate = newInterviewDate ?? DateTime.Today;
+
+        application.Interviews.Add(new InterviewRecord
+        {
+            InterviewDate = newInterview.InterviewDate,
+            InterviewType = newInterview.InterviewType,
+            InterviewerName = newInterview.InterviewerName,
+            Outcome = newInterview.Outcome,
+            Notes = newInterview.Notes
+        });
+
+        newInterview = new InterviewRecord();
+        newInterviewDate = DateTime.Today;
+    }
+
+    private void RemoveInterview(InterviewRecord interview)
+    {
+        if (application is null)
+            return;
+
+        application.Interviews.Remove(interview);
     }
 }

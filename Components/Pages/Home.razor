@@ -1,11 +1,149 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
-<MudButton Variant="Variant.Filled"
-           Color="Color.Primary">
-    Test
-</MudButton>
-<PageTitle>Home</PageTitle>
+@using JobSearchApp.Models
+@using JobSearchApp.Services
 
-<h1>Hello, world!</h1>
+@inject CompanyService CompanyService
+@inject JobPostingService JobPostingService
+@inject ApplicationRecordService ApplicationService
 
-Welcome to your new app.
+<PageTitle>Dashboard</PageTitle>
+
+<MudText Typo="Typo.h4">Dashboard</MudText>
+
+<MudGrid Class="mt-4">
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">Companies</MudText>
+            <MudText Typo="Typo.h4">@companyCount</MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">Job Postings</MudText>
+            <MudText Typo="Typo.h4">@jobPostingCount</MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">Applications</MudText>
+            <MudText Typo="Typo.h4">@applicationCount</MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">Interviews</MudText>
+            <MudText Typo="Typo.h4">@interviewingCount</MudText>
+        </MudPaper>
+    </MudItem>
+
+
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">Upcoming Interviews</MudText>
+            <MudText Typo="Typo.h4">@upcomingInterviewCount</MudText>
+        </MudPaper>
+    </MudItem>
+
+</MudGrid>
+
+<MudGrid Class="mt-4">
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">Application Status</MudText>
+
+            <MudTable Items="statusBreakdown">
+                <HeaderContent>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Count</MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd>@context.Status</MudTd>
+                    <MudTd>@context.Count</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">Recent Applications</MudText>
+
+            <MudTable Items="recentApplications">
+                <HeaderContent>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Job</MudTh>
+                    <MudTh>Company</MudTh>
+                    <MudTh>Status</MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd>@context.DateApplied.ToShortDateString()</MudTd>
+                    <MudTd>@context.JobTitle</MudTd>
+                    <MudTd>@context.CompanyName</MudTd>
+                    <MudTd>@context.Status</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private int companyCount;
+    private int jobPostingCount;
+    private int applicationCount;
+    private int interviewingCount;
+    private int upcomingInterviewCount;
+
+    private List<ApplicationRecord> recentApplications = new();
+    private List<StatusCount> statusBreakdown = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var companies = await CompanyService.GetAsync();
+        var jobPostings = await JobPostingService.GetAsync();
+        var applications = await ApplicationService.GetAsync();
+
+        companyCount = companies.Count;
+        jobPostingCount = jobPostings.Count;
+        applicationCount = applications.Count;
+
+        
+        interviewingCount =
+        applications.Sum(a => a.Interviews?.Count ?? 0);
+
+
+        upcomingInterviewCount =
+        applications
+        .SelectMany(a => a.Interviews ?? new List<InterviewRecord>())
+        .Count(i =>
+            i.InterviewDate >= DateTime.Today &&
+            i.Outcome == "Pending");
+
+        recentApplications = applications
+            .OrderByDescending(a => a.DateApplied)
+            .Take(10)
+            .ToList();
+
+        statusBreakdown = applications
+            .GroupBy(a => a.Status)
+            .Select(g => new StatusCount
+            {
+                Status = g.Key,
+                Count = g.Count()
+            })
+            .OrderBy(x => x.Status)
+            .ToList();
+    }
+
+    private class StatusCount
+    {
+        public string Status { get; set; } = "";
+        public int Count { get; set; }
+    }
+}
