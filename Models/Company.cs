@@ -9,11 +9,14 @@ public class Company
     [BsonRepresentation(BsonType.ObjectId)]
     public string? Id { get; set; }
 
+    [BsonElement("name")]
     public string Name { get; set; } = "";
+    [BsonElement("website")]
     public string WebsiteUrl { get; set; } = "";
     public string CareersUrl { get; set; } = "";
     public string LinkedInUrl { get; set; } = "";
 
+    [BsonElement("industry")]
     public string Industry { get; set; } = "";
     public string Location { get; set; } = "";
     public string Notes { get; set; } = "";

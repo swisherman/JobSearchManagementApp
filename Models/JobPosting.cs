@@ -8,8 +8,12 @@ public class JobPosting
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     public string? Id { get; set; }
+
+    [BsonElement("jobTitle")]
     public string Title { get; set; } = "";
     public string CompanyId { get; set; } = "";
+    
+    [BsonElement("companyName")] 
     public string CompanyName { get; set; } = "";
 
     public string PostingUrl { get; set; } = "";
@@ -22,6 +26,7 @@ public class JobPosting
     public string Description { get; set; } = "";
     public string Notes { get; set; } = "";
 
+    [BsonElement("status")]
     public string Status { get; set; } = "Interested";
     // Interested, Applied, Rejected, Interviewing, Closed
 

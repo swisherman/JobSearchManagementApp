@@ -25,6 +25,10 @@ builder.Services.AddSingleton<FileScannerService>();
 builder.Services.AddSingleton<CompanyService>();
 builder.Services.AddSingleton<JobPostingService>();
 builder.Services.AddSingleton<ApplicationRecordService>();
+builder.Services.AddSingleton<InterviewService>();
+builder.Services.AddSingleton<ProjectService>();
+
+
 
 
 
