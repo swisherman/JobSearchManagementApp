@@ -1,0 +1,52 @@
+# Build output
+
+bin/
+obj/
+
+# Visual Studio
+
+.vs/
+*.user
+*.suo
+
+# Rider
+
+.idea/
+
+# VS Code
+
+.vscode/
+
+# ASP.NET configuration
+
+appsettings.json
+appsettings.Development.json
+
+# Secrets
+
+secrets.json
+.env
+.env.*
+
+# Logs
+
+logs/
+*.log
+
+# Publish output
+
+publish/
+
+# NuGet
+
+packages/
+
+# Node modules (if ever added)
+
+node_modules/
+
+# OS files
+
+Thumbs.db
+Desktop.ini
+.DS_Store
