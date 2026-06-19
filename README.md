@@ -28,7 +28,9 @@ This application centralizes those activities into a single dashboard backed by 
 
 ## Screenshots
 
-*Add screenshots here.*
+### Dashboard
+
+![Dashboard](assets/screenshots/dashboard.png)
 
 ## Getting Started
 

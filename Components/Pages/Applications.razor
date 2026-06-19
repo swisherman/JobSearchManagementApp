@@ -66,8 +66,41 @@
 
 <MudPaper Class="pa-4 mt-4">
     <MudText Typo="Typo.h6">Application List</MudText>
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6">Filters</MudText>
 
-    <MudTable Items="applications">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" Label="Status" @bind-Value="selectedStatus">
+                    <MudSelectItem Value="@("All")">All</MudSelectItem>
+                    <MudSelectItem Value="@("Applied")">Applied</MudSelectItem>
+                    <MudSelectItem Value="@("Followed Up")">Followed Up</MudSelectItem>
+                    <MudSelectItem Value="@("Interviewing")">Interviewing</MudSelectItem>
+                    <MudSelectItem Value="@("Offer")">Offer</MudSelectItem>
+                    <MudSelectItem Value="@("Rejected")">Rejected</MudSelectItem>
+                    <MudSelectItem Value="@("Withdrawn")">Withdrawn</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" Label="Company" @bind-Value="selectedCompany">
+                    <MudSelectItem Value="@("All")">All</MudSelectItem>
+                    @foreach (var company in companyNames)
+                    {
+                        <MudSelectItem Value="@company">@company</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudTextField Label="Search"
+                              Placeholder="Job title, company, notes..."
+                              @bind-Value="searchText"
+                              Immediate="true" />
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+    <MudTable Items="filteredApplications">
         <HeaderContent>
             <MudTh>Date Applied</MudTh>
             <MudTh>Job Title</MudTh>
@@ -104,6 +137,10 @@
 @code {
     private List<ApplicationRecord> applications = new();
     private List<JobPosting> jobPostings = new();
+    private string selectedStatus = "All";
+    private string selectedCompany = "All";
+    private string searchText = "";
+    private List<string> companyNames = new();
 
     private ApplicationRecord currentApplication = new();
     private bool isEditing = false;
@@ -120,7 +157,15 @@
     private async Task LoadApplications()
     {
         applications = await ApplicationService.GetAsync();
+        
+        companyNames = applications
+        .Select(a => a.CompanyName)
+        .Where(c => !string.IsNullOrWhiteSpace(c))
+        .Distinct()
+        .OrderBy(c => c)
+        .ToList();
     }
+    
 
     private void OnJobPostingChanged(string jobPostingId)
     {
@@ -178,4 +223,19 @@
         followUpDate = null;
         isEditing = false;
     }
+    private List<ApplicationRecord> filteredApplications =>
+    applications
+        .Where(a =>
+            selectedStatus == "All" ||
+            a.Status == selectedStatus)
+        .Where(a =>
+            selectedCompany == "All" ||
+            a.CompanyName == selectedCompany)
+        .Where(a =>
+            string.IsNullOrWhiteSpace(searchText) ||
+            (a.JobTitle?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (a.CompanyName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (a.Notes?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false))
+        .OrderByDescending(a => a.DateApplied)
+        .ToList();
 }
